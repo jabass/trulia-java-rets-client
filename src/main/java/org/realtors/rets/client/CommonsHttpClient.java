@@ -46,6 +46,16 @@ public class CommonsHttpClient extends RetsHttpClient {
         httpClientParams.setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.RFC_2109);
         return httpClientParams;
 	}
+	public static BasicHttpParams defaultParamsWithCookiePolicy(int timeout, String policy) {
+		BasicHttpParams httpClientParams = new BasicHttpParams();
+        // connection to server timeouts
+        HttpConnectionParams.setConnectionTimeout(httpClientParams, timeout);
+        HttpConnectionParams.setSoTimeout(httpClientParams, timeout);
+        // set to rfc 2109 as it puts the ASP (IIS) cookie _FIRST_, this is critical for interealty
+        httpClientParams.setParameter(ClientPNames.COOKIE_POLICY, policy);
+        return httpClientParams;
+	}
+	
 	public static ThreadSafeClientConnManager defaultConnectionManager(int maxConnectionsPerRoute, int maxConnectionsTotal) {
 		// allows for multi threaded requests from a single client
         ThreadSafeClientConnManager connectionManager = new ThreadSafeClientConnManager();
@@ -62,6 +72,11 @@ public class CommonsHttpClient extends RetsHttpClient {
 
 	public CommonsHttpClient() {
 		this(new DefaultHttpClient(defaultConnectionManager(Integer.MAX_VALUE, Integer.MAX_VALUE), defaultParams(DEFAULT_TIMEOUT)), null, true);
+	}
+	
+	public CommonsHttpClient( boolean bestMatchCookies ) {
+			this(new DefaultHttpClient(defaultConnectionManager(Integer.MAX_VALUE, Integer.MAX_VALUE), 
+					defaultParamsWithCookiePolicy(DEFAULT_TIMEOUT, CookiePolicy.BEST_MATCH)), null, true);
 	}
 	
 	public CommonsHttpClient(int timeout, String userAgentPassword, boolean gzip) {
