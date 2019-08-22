@@ -3,7 +3,9 @@ package org.realtors.rets.client;
 
 import java.io.FileWriter;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+
 import org.jdom.Document;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
@@ -23,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
  */
 public class RetsTransport {
 	private static final String RETS_SESSION_ID_HEADER = "RETS-Session-ID"; // TODO spec says hyphen, Marketlinx uses an underscore
-
+	
 	private RetsHttpClient client;
 	private CapabilityUrls capabilities;
 	private String method = "GET";
@@ -189,6 +191,14 @@ public class RetsTransport {
 
 		LoginResponse response = new LoginResponse(this.capabilities.getLoginUrl());
 
+		// RETS 1.7.2 specification (See section 3.3 Required Client Request Header Fields) 
+		// requires clients to include any cookies set by the server.
+		Map headers = retsHttpResponse.getHeaders();
+		String setCookie = (String) headers.get("Set-Cookie");
+		if( setCookie != null && !setCookie.isEmpty() ) {
+			this.client.addDefaultHeader("Cookie", setCookie);
+		}
+		
 		String sessionId = retsHttpResponse.getCookie(RETS_SESSION_ID_HEADER);
 		response.setSessionId(sessionId);
 		response.setStrict(this.strict);
